@@ -1,0 +1,64 @@
+# 동별 데이터에서 feature column 쓸만한 것 고르기
+
+## 1. 파일 불러오기
+
+```{r}
+library(readxl)
+```
+
+```{r}
+dong_data<-read_xlsx('data/2022.9월_29개 통신정보.xlsx')
+real_estate<-read.csv('data/real_estate_final.csv')
+real_estate_final<-read.csv('data/real_estate_final_plus_academy_train.csv')
+```
+
+```{r}
+real_estate$보증금범위 <- as.factor(real_estate$보증금범위)
+real_estate$보증금범위2 <- as.factor(real_estate$보증금범위2)
+real_estate$보증금범위3 <- as.factor(real_estate$보증금범위3)
+```
+
+```{r}
+real_estate_final$보증금범위 <- as.factor(real_estate_final$보증금범위)
+real_estate_final$보증금범위2 <- as.factor(real_estate_final$보증금범위2)
+real_estate_final$보증금범위3 <- as.factor(real_estate_final$보증금범위3)
+```
+
+## 2. 필요한 컬럼 뽑아내기
+
+```{r}
+dong_overdue<-aggregate(`최근 3개월 내 요금 연체 비율`~자치구,dong_data,max)
+```
+
+## 3. real_estate에 붙이기
+
+```{r}
+new <-rep(0,nrow(real_estate))
+
+for (i in 1:nrow(real_estate)) {
+  for (j in 1:nrow(dong_one)) {
+    if(real_estate$구[i] == dong_one$자치구[j]){
+      new[i]<-dong_overdue$`최근 3개월 내 요금 연체 비율`[j]
+    }
+  }
+}
+```
+
+```{r}
+real_estate$연체 <- new
+real_estate_final$연체<-new
+```
+
+```{r}
+cor(real_estate$보증금,real_estate$연체)
+```
+
+```{r}
+test<-real_estate_final[,c(8,10:15)]
+```
+
+```{r}
+mean(nnet_for(test,5)) 
+mean(rf_for(test,5)) 
+svm_for(test,1)
+```

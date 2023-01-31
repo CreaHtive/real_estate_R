@@ -1,0 +1,43 @@
+# 추가로 본번 부번 칼럼 넣기
+
+```{r}
+one <- read.csv('data/real_estate_1.csv')
+two <- read.csv('data/real_estate_2.csv')
+three <- read.csv('data/서울시 부동산 전월세가 정보.csv',fileEncoding = 'euc-kr')
+```
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+one<-arrange(one,- one$보증금)[-c(1:4),]
+one
+two
+```
+
+```{r}
+three<-subset(three,three$전월세.구분 == '전세')
+three<-subset(three,three$건물용도 == '아파트')
+three<-arrange(three,- three$보증금.만원.)[-c(1:4),]
+```
+
+```{r}
+two
+three<-three[,c(8,9)]
+three
+```
+
+```{r}
+two$본번<- three$본번
+two$부번 <- three$부번
+two
+```
+
+```{r}
+two<-data.frame(two[,1:2],two[,10:11],two[,3:9])
+```
+
+```{r}
+write.csv(two,'data/real_estate_3.csv',row.names = F)
+```

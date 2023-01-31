@@ -1,0 +1,42 @@
+# 동별 부동산 수 컬럼 만들기
+
+## 1. 파일 불러오기
+
+```{r}
+budongsan<-read.csv('data/서울시 부동산 중개업소 정보.csv',fileEncoding = 'euc-kr')
+real_estate<-read.csv('data/real_estate_final.csv')
+```
+
+## 2. 부동산 동 별 부동산 수
+
+```{r}
+budongsan$new<-paste(budongsan$자치구명,budongsan$법정동명)
+budongsan_num<-data.frame(table(budongsan$new))
+```
+
+## 3. real_estate에 붙이기
+
+```{r}
+a<- paste(real_estate$구,real_estate$동)
+new<-rep(median(budongsan_num$Freq),nrow(real_estate))
+
+for (i in 1:nrow(real_estate)) {
+  for (j in 1:nrow(budongsan_num)) {
+    if(a[i] == budongsan_num$Var1[j]){
+      new[i]<-budongsan_num$Freq[j]
+    }
+  }
+}
+```
+
+```{r}
+real_estate$부동산수<-new
+```
+
+### 
+
+## 4. 파일 저장하기
+
+```{r}
+write.csv(real_estate,'data/real_estate_budongsan.csv',row.names = F)
+```

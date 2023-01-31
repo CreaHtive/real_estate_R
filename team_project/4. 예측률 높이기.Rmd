@@ -1,0 +1,422 @@
+# 예측률 높이기 위해 컬럼들 붙이기
+
+## 파일 불러오기
+
+```{r}
+real_estate<-read.csv('data/real_estate_final.csv')
+```
+
+## 보증금 범위 factor로 바꾸기
+
+```{r}
+real_estate$보증금범위 <- as.factor(real_estate$보증금범위)
+real_estate$보증금범위2 <- as.factor(real_estate$보증금범위2)
+real_estate$보증금범위3 <- as.factor(real_estate$보증금범위3)
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 1. 구별 학원개수가 영향이 있는지 확인하기 : 구별로
+
+### 1. 학원 개수 column 가져오도록 파일 불러오기
+
+```{r}
+academy<-read.csv('data/real_estate_academy.csv')
+```
+
+### 2. real_state에 학원 column 붙이기
+
+```{r}
+real_estate$총학원수<-academy[,12]
+```
+
+### 3. 총학원수 그래프 그려보기
+
+```{r}
+par(family = 'AppleGothic')
+plot(table(real_estate$총학원수),
+     xlab = '학원개수',
+     ylab = '학원개수 빈도'
+     )
+```
+
+### 4. 상관계수 찍어보기
+
+```{r}
+cor(real_estate[,c(7,11:14)])
+```
+
+### 5. 예측률 확인하기 : 72.08026%
+
+```{r}
+# feature 다 넣고
+test<-real_estate[,c(9,11:14)]
+# feature 제일 낮은 건축년도 빼고
+test2<-real_estate[,c(9,11,12,14)]
+```
+
+```{r}
+#mean(nnet_for(test,5)) # 39.18
+#mean(nnet_for(test2,5)) # 35.83
+#mean(rf_for(test,10)) # 72.08026
+#mean(rf_for(test2,5)) # 61.61
+# svm_for(test,1) # 59.37
+# svm_for(test2,1) # 53.08
+```
+
+```{r}
+write.csv(real_estate,'data/real_estate_final_plus_academy.csv')
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 2. 구별 지하철수가 영향이 있는지 확인하기 : 구별로
+
+### 1. 지하철수 파일 불러오기
+
+```{r}
+train<-read.csv('data/real_estate_train.csv')
+```
+
+### 2. real_state에 지하철수 컬럼 붙이기
+
+```{r}
+real_estate$지하철수<-train$지하철수
+```
+
+### 3. 지하철 수 그래프 찍어보기
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(table(real_estate$지하철수))
+```
+
+### 4. 상관관계 찍어보기
+
+```{r}
+cor(real_estate[,c(7,11:15)])
+```
+
+### 5. 예측률 확인하기 : 72.08755%
+
+```{r}
+test<-real_estate[,c(9,11:15)]
+```
+
+```{r}
+#mean(nnet_for(test,5)) # 33
+#mean(rf_for(test,10)) # 71
+#svm_for(test,1)
+```
+
+### 6. 학원 개수 분포와 지하철 수 구별 분포
+
+```{r}
+barplot(t(aggregate(지하철수 ~구,real_estate,mean)$지하철수))
+barplot(t(aggregate(총학원수 ~구,real_estate,mean)$총학원수))
+```
+
+```{r}
+write.csv(real_estate,'data/real_estate_final_plus_academy_train.csv',row.names = F)
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 3. 동별로 부동산수가 영향이 있을지 : 동별로
+
+### 1. 파일 불러오기
+
+```{r}
+budongsan<-read.csv('data/real_estate_budongsan.csv')
+```
+
+### 2. real_state에 붙이기
+
+```{r}
+real_estate$부동산수<-budongsan$부동산수
+```
+
+### 3. 예측률 확인하기
+
+```{r}
+test<-real_estate[,c(9,11:16)]
+```
+
+```{r}
+#mean(rf_for(test,5))
+```
+
+### 4. 파일 저장하기
+
+```{r}
+write.csv(real_estate,'data/real_estate_final_plus_academy_train_budongsan.csv',row.names = F)
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 4. 구별로 소음건수 영향이 있을지 : 구별로
+
+### 1. 파일 불러오기
+
+```{r}
+noise<-read.csv('data/real_estate_noise.csv')
+```
+
+### 2. real_state에 붙이기
+
+```{r}
+real_estate$소음건수<-noise$소음건수
+```
+
+### 3. 예측률 확인하기 : 경우의 수 다 따져보기
+
+```{r}
+test<-real_estate[,c(8,10,11,12)+1] # 61 / 61.21
+test2<-real_estate[,c(8,10,11,12,13)+1] # 72 / 72
+test3<-real_estate[,c(8,10,11,12,14)+1] # 71.64 / 71.68
+test4<-real_estate[,c(8,10,11,12,15)+1] # 72.02 / 72.10
+test5<-real_estate[,c(8,10,11,12,16)+1] # 72.01 / 72.04
+test6<-real_estate[,c(8,10,11,12,13,14)+1] # 72.18 / 72.16
+test7<-real_estate[,c(8,10,11,12,13,15)+1] # 72.87 / 72.93
+test8<-real_estate[,c(8,10,11,12,13,16)+1] # 72.13 / 72.18
+test9<-real_estate[,c(8,10,11,12,14,15)+1] # 72.93 / 72.93
+test10<-real_estate[,c(8,10,11,12,14,16)+1] # 72.2 /72.09
+test11<-real_estate[,c(8,10,11,12,15,16)+1] # 72.89 / 72.91
+test12<-real_estate[,c(8,10,11,12,13,14,15)+1] # 73.12 / 73.14  ######
+test13<-real_estate[,c(8,10,11,12,13,14,16)+1] # 70.89 / 70.95
+test14<-real_estate[,c(8,10,11,12,14,15,16)+1] # 73.1 / 73.2    ######
+test15<-real_estate[,c(8,10,11,12,13,14,15,16)+1] # 72.57 / 72.67
+```
+
+```{r}
+#mean(rf_for(test,5))
+#mean(rf_for(test2,5))
+#mean(rf_for(test3,5))
+#mean(rf_for(test4,5))
+#mean(rf_for(test5,5))
+#mean(rf_for(test6,5))
+#mean(rf_for(test7,5))
+#mean(rf_for(test8,5))
+#mean(rf_for(test9,5))
+#mean(rf_for(test10,5))
+#mean(rf_for(test11,5))
+#mean(rf_for(test12,5))
+#mean(rf_for(test13,5))
+#mean(rf_for(test14,5))
+#mean(rf_for(test15,5))
+```
+
+### 4. 파일 저장하기
+
+```{r}
+write.csv(real_estate,'data/real_estate_final_plus_academy_train_budongsan_noise.csv',
+          row.names = F
+          )
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 5. 구별 버스 노선 개수가 영향이 있을지
+
+### 1. 파일 불러오기
+
+```{r}
+bus<-read.csv('data/stationlast.csv')
+colnames(bus)[12:13] <- c('광역버스여부','광역버스개수')
+```
+
+### 2. real_estate와 붙이기
+
+```{r}
+real_estate$광역버스여부<-bus[,12]
+real_estate$광역버스개수<-bus[,13]
+```
+
+### 3. 파일 저장하기
+
+```{r}
+write.csv(real_estate,
+          'data/real_estate_final_plus_academy_train_budongsan_noise_bus.csv',
+          row.names = F
+          )
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 6. 공원 , cctv 데이터 추가로 넣었을 때 영향이 있을지
+
+### 1. 파일 불러오기
+
+```{r}
+real_estate<-read.csv('data/real_estate_final_plus_academy_train_budongsan_noise_bus.csv')
+park<- read.csv('data/real_estate_park.csv')
+cctv<-read.csv('data/real_estate_cctv.csv')
+```
+
+### 2. real_estate와 붙이기
+
+```{r}
+real_estate$총공원수<-park$총공원수
+real_estate$총CCTV수<-cctv$총CCTV수
+```
+
+### 3. 파일 저장하기
+
+```{r}
+write.csv(real_estate,
+          'data/real_estate_final_plus_academy_train_budongsan_noise_bus_park_cctv.csv',
+          row.names = F
+          )
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 7. 아파트 데이터 추가로 넣어서 feature column 꾸미기
+
+### 1. 파일 불러오기
+
+```{r}
+apartment<-read.csv('data/서울시 공동주택 아파트 정보.csv',fileEncoding = 'euc-kr')
+```
+
+### 2. apartment 필요한 컬럼만 뽑기
+
+```{r}
+library(stringr)
+```
+
+```{r}
+# 3,16,17,18,19,20,21,22,23,40,
+apartment<-apartment[,c(3,16,17,18,19,20,21,22,23,40)]
+colnames(apartment)<-str_remove_all(colnames(apartment),'k.')
+```
+
+### 3. apartment na 있는지 확인
+
+```{r}
+for (i in 1:ncol(apartment)) {
+  cat(paste(i,'번째 na 수 :',
+            ifelse(sum(is.na(apartment[,i]))>0,
+                   sum(is.na(apartment[,i])),
+                   ifelse(is.na(sum(apartment[,i] == '')),
+                   0,
+                   sum(apartment[,i] == '')
+                   )
+                   ),
+            '\n')
+      )
+}
+```
+
+### 4. na 있는 것들 제거 하기
+
+```{r}
+for (i in 1:ncol(apartment)) {
+  apartment<-subset(apartment,!(apartment[,i]=='' | is.na(apartment[,i])))
+}
+```
+
+### 5. na 제거 됐는지 확인하기
+
+```{r}
+for (i in 1:ncol(apartment)) {
+  cat(paste(i,'번째 na 수 :',
+            ifelse(sum(is.na(apartment[,i]))>0,
+                   sum(is.na(apartment[,i])),
+                   ifelse(is.na(sum(apartment[,i] == '')),
+                   0,
+                   sum(apartment[,i] == '')
+                   )
+                   ),
+            '\n')
+      )
+}
+```
+
+### 6.unique 아파트명 이 apartment row와 같은지 체크
+
+```{r}
+length(unique(apartment$아파트명))
+nrow(apartment)
+```
+
+### 7. 아파트 이름 중복 된 것들 제거하기
+
+```{r}
+unique_apartment<-data.frame(table(apartment$아파트명))
+duplicate_name<-subset(unique_apartment,unique_apartment$Freq > 1)
+```
+
+```{r}
+duplicate_row<-which(apartment$아파트명 %in% duplicate_name$Var1)
+apartment<-apartment[-duplicate_row,]
+length(unique(apartment$아파트명)) == nrow(apartment)
+```
+
+### 8. real_estate와 apartment에 중복되는 아파트만 추려서 하나의 데이터 셋 만들기
+
+```{r}
+real_estate<-merge(x = real_estate ,y= apartment , by.x = "아파트명",by.y = "아파트명")
+```
+
+### 9. column feature column 순으로 바꾸기 ( 정제 안해도 되는 것, 해야 되는 것 순으로)
+
+```{r}
+real_estate<-data.frame(옛보증금범위1 = real_estate[,9],
+           옛보증금범위2 = real_estate[,10],
+           옛보증금범위3 = real_estate[,8],
+           real_estate[,2:6],
+           아파트명 = real_estate[,1],
+           보증금 = real_estate[,7],
+           real_estate[,11:21],
+           real_estate[,26:27],
+           주차대수 = real_estate[,30],
+           real_estate[,c(22:25,28,29)]
+           )
+```
+
+### 10. 보증금 범위 새로 만들기 (4개로)
+
+### 36700 / 53000 / 70375
+
+```{r}
+summary(real_estate$보증금)
+```
+
+```{r}
+real_estate$보증금범위<-ifelse(real_estate$보증금<=3.67*10^4,
+       1,
+       ifelse(real_estate$보증금<=5.3*10^4,
+              2,
+              ifelse(real_estate$보증금<=70375,
+                     3,
+                     4
+                     )
+              )
+       )
+```
+
+```{r}
+real_estate$보증금범위<-factor(real_estate$보증금범위,
+       levels = 1:4,
+       labels = c('1분위','2분위','3분위','4분위')
+       )
+```
+
+```{r}
+real_estate<-data.frame(real_estate[,1:10],
+           보증금범위 = real_estate[,31],
+           real_estate[,11:30]
+           )
+```
+
+```{r}
+write.csv(real_estate,'data/real_estate_final_plus_academy_train_budongsan_noise_bus_park_cctv_apartment.csv',
+          row.names = F
+          )
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 

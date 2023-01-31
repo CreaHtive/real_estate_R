@@ -1,0 +1,330 @@
+# 동대문구 전세 가격 예측
+
+# 1. 파일 불러오기
+
+```{r}
+real_estate<-read.csv('data/real_estate_final_plus_academy_train_budongsan_noise_bus_park_cctv_apartment.csv')
+```
+
+# 2. 구별 , 동별 데이터 였던 컬럼 지우기
+
+```{r}
+real_estate<-subset(real_estate,real_estate$구 == '영등포구')
+real_estate<-real_estate[,c(4:10,12:14,23:31)]
+```
+
+# 3. numeric한 값들과 보증금 상관 계수 확인하기
+
+## 순위 : 임대면적 , 건축년도, 층 \>\>\> 전체동수, 전체세대수, 주차대수
+
+```{r}
+cor(real_estate[,7:13])
+```
+
+# 4. EDA
+
+## 4-1. 임대면적이 feature column으로 적당한지 : O
+
+### 4-1-1. 임대면적과 보증금 산점도
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$보증금~real_estate$임대면적,
+     ylab = '보증금',
+     xlab = '임대면적'
+     )
+```
+
+### 4-1-2. 임대면적 히스토그램
+
+```{r}
+par(family = 'AppleGothic')
+
+hist(real_estate$임대면적,
+     xlab = '임대면적',
+     main = '임대면적 빈도수'
+     )
+```
+
+### 4-1-3. 임대면적 boxplot
+
+```{r}
+boxplot(real_estate$임대면적,
+        horizontal = T
+        )$stats
+```
+
+### 4-1-4. 임대면적 이상치 제거 해보기
+
+```{r}
+sub_real_estate<-subset(real_estate,real_estate$임대면적 <= 180)
+```
+
+### 4-1-5. 이상치 제거 후 , 산점도 보기
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(sub_real_estate$보증금~sub_real_estate$임대면적,
+     ylab = '보증금',
+     xlab = '임대면적'
+     )
+```
+
+### 4-1-6. 이상치 제거 후, 임대면적 히스토그램
+
+```{r}
+par(family = 'AppleGothic')
+
+hist(sub_real_estate$임대면적,
+     xlab = '임대면적',
+     main = '임대면적 빈도수'
+     )
+```
+
+### 4-1-7. 이상치 제거 후, 상관계후 확인하기
+
+```{r}
+cor(real_estate$임대면적,real_estate$보증금)
+cor(sub_real_estate$임대면적,sub_real_estate$보증금)
+
+test<-sub_real_estate[,7:10]
+test2<-real_estate[,7:10]
+lm(보증금 ~. ,test)
+summary(lm(보증금 ~. ,test))
+lm(보증금 ~. ,test2)
+summary(lm(보증금 ~. ,test2))
+```
+
+### 4-1-8. 결론
+
+### : 산점도를 보았을 때, 임대면적과 보증금 간의 상관관계가 0.7로 높다보니, 선형적인 관계를 보였줬다. 이에 따라서 이는 충분히 feature column으로 가능하다고 판단했다.
+
+### : 이상치라 생각되는 부분을 제거 후 오히려 상관계수가 줄어들었기에 이를 이상치로 판단한 것은 잘못이였고, 원래 데이터로 사용하는 것이 옳다고 생각한다.
+
+## 4-2. 건축년도 feature column으로 적당한지 : O
+
+### 4-2-1. 건축년도와 보증금 산점도
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$보증금~real_estate$건축년도,
+     ylab = '보증금',
+     xlab = '건축년도'
+     )
+```
+
+### 4-2-2. 건축년도 히스토그램
+
+```{r}
+par(family = 'AppleGothic')
+
+hist(real_estate$건축년도,
+     xlab = '건축년도',
+     main = '건축년도 빈도수'
+     )
+```
+
+### 4-2-3. 건축년도 boxplot : 이상치 X
+
+```{r}
+boxplot(real_estate$건축년도,
+        horizontal = T
+        )$stats
+```
+
+### 4-2-4. 결론
+
+### : 산점도를 보았을 때, 년도 별로 보증금의 분포가 상이하다는 것을 판단할 수 있다. 건축년도 히스토그램 역시 년도별로 분포가 다르기 때문에 이를 feature column으로 사용하기에 적당하다고 판단하였다.
+
+## 4-3. 층이 feature column으로 적당한지 : ?
+
+### 4-3-1. 층과 보증금 산점도
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$보증금~real_estate$층,
+     ylab = '보증금',
+     xlab = '층'
+     )
+```
+
+### 4-3-2. 층 히스토그램
+
+```{r}
+par(family = 'AppleGothic')
+
+hist(real_estate$층,
+     xlab = '층',
+     main = '임대면적 빈도수'
+     )
+```
+
+### 4-3-3. 층 boxplot : 이상치 없음
+
+```{r}
+boxplot(real_estate$층,
+        horizontal = T
+        )
+```
+
+### 4-3-4. 결론
+
+### : 층별 보증금 산점도를 보았을 때, 분포가 건축년도와 임대면적에 비해 보증금 분포가 비슷하다고 파악했지만, 상관계수를 보았을 때 0.3 정도로 약한 상관관계를 가지고 있었기 때문에 머신러닝을 돌려본 후에 유의미한 차이가 없다면 , 그 때 빼는 것으로 판단했다.
+
+## 4-4. 주차대수가 feature column으로 적당한지 : ?
+
+### 4-4-1. 주차대수와 보증금 산점도
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$보증금~real_estate$주차대수,
+     ylab = '보증금',
+     xlab = '주차대수'
+     )
+```
+
+### 4-4-2. 주차대수 히스토그램
+
+```{r}
+par(family = 'AppleGothic')
+
+hist(real_estate$주차대수,
+     xlab = '주차대수',
+     main = '주차대수 빈도수'
+     )
+```
+
+### 4-4-3. 주차대수 boxplot : 이상치 없음
+
+```{r}
+boxplot(real_estate$주차대수,
+        horizontal = T
+        )
+```
+
+### 4-4-4. 주차대수와 보증금 범위 별 막대그래프
+
+```{r}
+range<-seq(40000,80000,10000)
+barplot(table(real_estate$주차대수,cut(real_estate$보증금,range,right = T)),
+        beside = T
+        )
+```
+
+## 4-5. 아파트 데이터들이 feature column으로 맞을지
+
+```{r}
+real_estate$아파트숫자<-string_to_numeric(real_estate$아파트명)
+```
+
+```{r}
+unique(real_estate$아파트명)
+```
+
+```{r}
+par(family='AppleGothic')
+
+for (i in unique(real_estate$아파트명)) {
+  test<-subset(real_estate,real_estate$아파트명 == i)
+  hist(test$보증금,
+       main = i
+       )
+}
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+### 
+
+### 나중에 사용할 것
+
+# 5. modeling
+
+```{r}
+for (i in 1:6) {
+  real_estate[,12+i]<-string_to_numeric(real_estate[,12+i])
+}
+real_estate
+```
+
+## 5-1. feature column 및 target column 정규화
+
+```{r}
+for (i in 6:19) {
+  min<-min(real_estate[,i])
+  max<-max(real_estate[,i])
+  real_estate<-cbind(real_estate,scale(real_estate[,i],center= min,scale = max - min))
+}
+
+# 20이 target 
+colnames(real_estate)[20]<-'target'
+# 21 - 33 가 feature
+colnames(real_estate)[21:33]<-paste('v',seq(1,13,1),sep = '')
+```
+
+## 5-2. 정규화 된 feature column으로 군집화 하기
+
+```{r}
+test<-real_estate[,20:33]
+test
+training.data<-test[,-1]
+```
+
+```{r}
+library(factoextra)
+library(ggplot2)
+
+fviz_nbclust(training.data, kmeans, method = 'wss')
+```
+
+## 5-3. 군집화된 컬럼 넣기
+
+```{r}
+real_estate$new<-kmeans(training.data,5,nstart=25)$cluster
+real_estate$new<-factor(real_estate$new,
+       labels = c("1st",'2nd','3rd','4th','5th'),
+       levels = 1:5
+       )
+```
+
+## 5-4. 군집화된 컬럼의 범위 보기
+
+```{r}
+plot(real_estate$보증금~real_estate$new)
+first<-subset(real_estate,real_estate$new == '1st')
+second<-subset(real_estate,real_estate$new == '2nd')
+third<-subset(real_estate,real_estate$new == '3rd')
+fourth<-subset(real_estate,real_estate$new == '4th')
+fifth<-subset(real_estate,real_estate$new == '5th')
+```
+
+```{r}
+range(first$보증금)
+range(second$보증금)
+range(third$보증금)
+range(fourth$보증금)
+range(fifth$보증금)
+```
+
+## 5-5. 예측률 확인 하기
+
+```{r}
+test<-real_estate[,c(7:19,34)]
+test2<-real_estate[,c(21:33,34)]
+```
+
+```{r}
+mean(nnet_for(test,5))
+mean(nnet_for(test2,5))
+
+mean(rf_for(test,5))
+mean(rf_for(test2,5))
+
+mean(svm_for(test,5))
+mean(svm_for(test2,5))
+```

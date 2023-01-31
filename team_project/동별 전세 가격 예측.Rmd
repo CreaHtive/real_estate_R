@@ -1,0 +1,93 @@
+# 동별 전세 가격 예측
+
+# 1. 파일 불러오기
+
+```{r}
+real_estate<-read.csv('data/real_estate_final_plus_academy_train_budongsan_noise_bus_park_cctv_apartment.csv')
+```
+
+# 2. 구별 , 동별 데이터 였던 컬럼 지우기
+
+```{r}
+real_estate<-subset(real_estate,real_estate$구 == '광진구')
+unique(real_estate$아파트명)
+unique(real_estate$동)
+```
+
+```{r}
+library(dplyr)
+arrange(real_estate,real_estate$동)
+real_estate<-subset(real_estate,real_estate$동 == '광장동')
+
+test<-real_estate[,6:12]
+lm(보증금~.,test)
+summary(lm(보증금~.,test))
+
+real_estate<-real_estate[,c(6,8,9,10)]
+```
+
+# 5. modeling
+
+## 5-1. feature column 및 target column 정규화
+
+```{r}
+for (i in 1:4) {
+  min<-min(real_estate[,i])
+  max<-max(real_estate[,i])
+  real_estate<-cbind(real_estate,scale(real_estate[,i],center= min,scale = max - min))
+}
+real_estate
+# 맨 앞이 target 
+colnames(real_estate)[5]<-'target'
+# 나머지가 feature
+colnames(real_estate)[6:8]<-paste('v',seq(1,13,1),sep = '')
+real_estate
+```
+
+## 5-2. 정규화 된 feature column으로 군집화 하기
+
+```{r}
+test3<-real_estate[,5:8]
+training.data<-test3[,-1]
+```
+
+```{r}
+library(factoextra)
+library(ggplot2)
+
+fviz_nbclust(training.data, kmeans, method = 'wss')
+```
+
+## 5-3. 군집화된 컬럼 넣기
+
+```{r}
+real_estate$new<-kmeans(training.data,4 ,nstart=25)$cluster
+real_estate$new<-factor(real_estate$new,
+       labels = c("1st",'2nd','3rd','4th'),
+       levels = 1:4
+       )
+```
+
+## 5-4. 군집화된 컬럼의 범위 보기
+
+```{r}
+plot(real_estate$보증금~real_estate$new)
+```
+
+## 5-5. 예측률 확인 하기
+
+```{r}
+test<-real_estate[,c(2:4,9)]
+test2<-real_estate[,c(6:8,9)]
+```
+
+```{r}
+mean(nnet_for(test,5))
+mean(nnet_for(test2,5))
+
+mean(rf_for(test,5))
+mean(rf_for(test2,5))
+
+mean(svm_for(test,5))
+mean(svm_for(test2,5))
+```

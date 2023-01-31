@@ -1,0 +1,42 @@
+# 소음건수 데이터 붙이기
+
+## 1. 파일 불러오기
+
+```{r}
+noise<-read.csv('data/소음진동민원+현황_20221231225837.csv',header = T)
+real_estate<-read.csv('data/real_estate_final.csv')
+```
+
+```{r}
+colnames(noise)<-noise[1,]
+noise<-noise[-1,]
+noise<-noise[,-1]
+rownames(noise)<-c()
+```
+
+## 2. real_estate에 붙이기
+
+```{r}
+new<-rep(0,nrow(real_estate))
+
+for (i in 1:nrow(real_estate)) {
+  for (j in 1:nrow(noise)) {
+    if(real_estate$구[i] == noise$`자치구별(2)`[j]){
+      new[i]<-noise$`소음진동 민원`[j]
+    }
+  }
+}
+
+real_estate$소음건수<-new
+```
+
+```{r}
+real_estate$소음건수<-as.numeric(real_estate$소음건수)
+cor(real_estate$보증금,real_estate$소음건수)
+```
+
+## 3. 파일 저장하기
+
+```{r}
+write.csv(real_estate,'data/real_estate_noise.csv',row.names = F)
+```

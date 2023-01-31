@@ -1,0 +1,558 @@
+# 5. feature column 인지 확인하기
+
+## 1. 파일 불러오기
+
+```{r}
+real_estate<-read.csv('data/real_estate_final_plus_academy_train_budongsan_noise_bus_park_cctv_apartment.csv')
+```
+
+```{r}
+real_estate$옛보증금범위1<-as.factor(real_estate$옛보증금범위1)
+real_estate$옛보증금범위2<-as.factor(real_estate$옛보증금범위2)
+real_estate$옛보증금범위3<-as.factor(real_estate$옛보증금범위3)
+real_estate$보증금범위<-as.factor(real_estate$보증금범위)
+```
+
+## 2. 임대면적 feature column으로 쓰기 위해 범위 나누기 : O
+
+### 1. 임대면적 과 보증금범위 그래프
+
+-   그래프를 보았을 때, 보증금 범위에 따라 임대면적의 분포가 다른 것을 확인 할 수 있었다.
+
+-   그렇기 때문에 이를 feature column으로 사용하기에 충분하다고 판단했다.
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$임대면적,
+     real_estate$보증금범위
+     )
+```
+
+### 2. 임대면적 히스토그램 보기
+
+-   범위마다 빈도수가 다르기 때문에 feature column으로 가능하다는 것의 판단에 도움이 되었다.
+
+<!-- -->
+
+-   50 - 60 / 80 - 90 의 빈도가 확연히 높게 나왔다.
+
+```{r}
+par(family = 'AppleGothic')
+hist(real_estate$임대면적)
+```
+
+### 3. 임대면적 10씩 나누어서 보증금 범위에 어느 분포에 있는지 확인하기
+
+-   50 - 60 / 80 - 90 에 많이 분포 되어 있는데 확연한 특징이 없는 것으로 판단 된다.
+
+```{r}
+range<-seq(0,250,10)
+table(cut(real_estate$임대면적,range,right = T),real_estate$보증금범위)
+```
+
+### 4. 임대면적 50 - 60 / 80 - 90 디테일 하게 확인하기
+
+-   디테일 하게 나누어도 59 - 60 / 84 - 85에 모여있기 때문에 카테고리 나누는 것이 무의미하다.
+
+-   그렇지만, 임대면적은 feature column으로 충분히 가치가 있기에, 이 부분을 세분화 하는 것이 중요한 포인트이다.
+
+```{r}
+range<-seq(50,60,1)
+table(cut(real_estate$임대면적,range,right = T),real_estate$보증금범위)
+```
+
+```{r}
+range<-seq(80,90,1)
+table(cut(real_estate$임대면적,range,right = T),real_estate$보증금범위)
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 2. 건축년도 feature column으로 맞는지 판단하기 : X
+
+### 1. subset 하기
+
+```{r}
+sub_real_estate<-subset(real_estate,
+       (real_estate$임대면적 > 50 & real_estate$임대면적 <= 60) |
+       (real_estate$임대면적 > 80 & real_estate$임대면적 <= 90)
+       )
+```
+
+### 2. 건축년도 히스토그램
+
+```{r}
+hist(sub_real_estate$건축년도)
+```
+
+### 3. 건축년도랑 보증금범위 그래프
+
+```{r}
+plot(real_estate$건축년도,
+     real_estate$보증금범위,
+     )
+```
+
+### 4. 결론 : 건축년도는 feature column으로 의미 없다.
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 3. 층이 feature column으로 맞는지 판단하기 : O
+
+### 1. 층 히스토그램
+
+```{r}
+hist(sub_real_estate$층)
+```
+
+### 2. 층이랑 보증금 범위 그래프
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(sub_real_estate$층,
+     sub_real_estate$보증금범위
+     )
+```
+
+### 3. 층의 숫자 범위 보기
+
+```{r}
+range(sub_real_estate$층)
+```
+
+### 4. 층 범위 나누어서 보증금 범위와의 자세한 분포 보기
+
+```{r}
+range<-seq(-5,50,5)
+table(cut(sub_real_estate$층,range,right = T),sub_real_estate$보증금범위)
+# 14 - 30 : 18개 4 4 5 5 
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 관리방식이 feature column으로 맞는지 판단하기 : X
+
+### 1. subset 하기
+
+```{r}
+sub_real_estate2<-subset(sub_real_estate,
+       (sub_real_estate$층 > 0 & sub_real_estate$층 <= 30)
+       )
+```
+
+```{r}
+colnames(sub_real_estate2)[27:31]
+```
+
+### 2. 관리방식 히스토그램
+
+```{r}
+par(family = 'AppleGothic')
+barplot(table(sub_real_estate2$관리방식,sub_real_estate2$보증금범위),
+        beside = T
+        )
+```
+
+### 4. 결론 : 관리방식은 feature column으로 의미 없다.
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 복도유형이 feature column으로 맞는지 판단하기 : O
+
+### 1. 복도유형 막대그래프
+
+```{r}
+par(family = 'AppleGothic')
+
+barplot(table(sub_real_estate2$복도유형,sub_real_estate2$보증금범위),
+        beside = T
+        )
+```
+
+### 2. 복도유형이랑 보증금 범위 그래프
+
+```{r}
+table(sub_real_estate2$복도유형,sub_real_estate2$보증금범위)
+```
+
+### 3. 추세가 비슷한 계단식과 혼합식을 합쳐서 하나의 column으로 맞추기
+
+### : 계단식 , 혼합식 합치고 복도식 타워형 따로 컬럼으로 만들기
+
+```{r}
+sub_real_estate2$복도유형<-ifelse(sub_real_estate2$복도유형 == '계단식' | sub_real_estate2$복도유형 == '혼합식',
+       '계단식 혹은 혼합식',
+       sub_real_estate2$복도유형
+       )
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 난방방식이 feature column으로 맞는지 판단하기 : O
+
+### 1. 난방방식 히스토그램
+
+```{r}
+par(family = 'AppleGothic')
+
+barplot(table(sub_real_estate2$난방방식))
+```
+
+### 2. 난방방식과 보증금 범위 그래프
+
+```{r}
+par(family = 'AppleGothic')
+
+barplot(table(sub_real_estate2$난방방식,sub_real_estate2$보증금범위),
+        beside = T
+        )
+```
+
+### 3. 디테일한 추세 보기
+
+```{r}
+table(sub_real_estate2$난방방식,sub_real_estate2$보증금범위)
+```
+
+### 4. 추세가 비슷한 것 끼리 묶기
+
+### : 개별난방 , 기타, 중앙난방 묶고 지역난방만 있는 column 만들기
+
+```{r}
+sub_real_estate2$난방방식<-ifelse(sub_real_estate2$난방방식 == '개별난방' | sub_real_estate2$난방방식 == '기타'|
+sub_real_estate2$난방방식 == '중앙난방',
+       '개별난방 또는 중앙난방 또는 기타',
+       sub_real_estate2$난방방식
+       )
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 건설사 시공사가 feature column으로 맞는지 판단하기 : ?
+
+### 1. 건설사 시공사 히스토그램
+
+```{r}
+par(family = 'AppleGothic')
+
+barplot(table(sub_real_estate2$건설사.시공사.))
+```
+
+### 2. 건설사 시공사 와 보증금 범위 그래프
+
+```{r}
+par(family = 'AppleGothic')
+
+barplot(table(sub_real_estate2$건설사.시공사.,sub_real_estate2$보증금범위),
+        beside = T,
+        )
+```
+
+### 3. 디테일한 추세 보기
+
+```{r}
+cons_table<-table(sub_real_estate2$건설사.시공사.,sub_real_estate2$보증금범위)
+```
+
+### 4. 1,2,3,4 분위 만 해당되게 만든 시공사, 건설사 뽑기
+
+```{r}
+# 어디가 0인지 파악하기 위한 벡터
+cnt<-c(0,0,0,0)
+# 1~4분위 해당되는 기업 받기 위한 벡터
+one<-c()
+one_row_num<-c()
+two<-c()
+two_row_num<-c()
+three<-c()
+three_row_num<-c()
+four<-c()
+four_row_num<-c()
+
+for (i in 1:nrow(cons_table)) {
+  
+  for (j in 1:4) {
+    # 0 일때만 카운트 세기
+    if(cons_table[i,j] == 0){
+      cnt[j] <- 1
+    }
+    
+  }
+  
+  # 분위별 기업 넣을 벡터 만들기 
+  if(sum(cnt) == 3){
+    if(cnt[1] == 0){
+      one <- c(one, rownames(cons_table)[i])
+      one_row_num<-c(one_row_num,i)
+    }
+    
+    if(cnt[2] == 0){
+      two <- c(two, rownames(cons_table)[i])
+      two_row_num<-c(two_row_num,i)
+    }
+    
+    if(cnt[3] == 0){
+      three <- c(three, rownames(cons_table)[i])
+      three_row_num<-c(three_row_num,i)
+    }
+    
+    if(cnt[4] == 0){
+      four <- c(four, rownames(cons_table)[i])
+      four_row_num<-c(four_row_num,i)
+    }
+  }
+  
+  # count 초기화
+  cnt<-c(0,0,0,0)
+}
+
+```
+
+### 5. 테이블에서 1,2,3,4 해당 되는 것들 제외 시키기
+
+```{r}
+sub_cons_table<-cons_table[-c(one_row_num,two_row_num,three_row_num,four_row_num),]
+```
+
+### 6. 분위 별 추세 같은 것들 그룹짓기
+
+### : 추세 벡터 만들기
+
+```{r}
+ppp<-c()
+ppm<-c()
+ppz<-c()
+pmp<-c()
+pmm<-c()
+pmz<-c()
+pzp<-c()
+pzm<-c()
+pzz<-c()
+mpp<-c()
+mpm<-c()
+mpz<-c()
+mmp<-c()
+mmm<-c()
+mmz<-c()
+mzp<-c()
+mzm<-c()
+mzz<-c()
+zpp<-c()
+zpm<-c()
+zpz<-c()
+zmp<-c()
+zmm<-c()
+zmz<-c()
+zzp<-c()
+zzm<-c()
+zzz<-c()
+```
+
+### : 추세 벡터에 넣기
+
+```{r}
+uds_cnt<-c(0,0,0)
+
+for (i in 1:nrow(sub_cons_table)) {
+  
+  for (j in 2:4) {
+    if(sub_cons_table[i,j] > sub_cons_table[i,j-1]){
+      uds_cnt[j-1] <- c(1)
+    }
+    
+    if(sub_cons_table[i,j] < sub_cons_table[i,j-1]){
+      uds_cnt[j-1] <- c(-1)
+    }
+    
+    if(sub_cons_table[i,j] == sub_cons_table[i,j-1]){
+      uds_cnt[j-1] <- c(0)
+    }
+  }
+  
+  if(uds_cnt[1] == -1){
+    if(uds_cnt[2] == -1){
+      if(uds_cnt[3] == -1){
+        mmm<-c(mmm,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 0){
+        mmz<-c(mmz,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 1){
+        mmp<-c(mmp,rownames(sub_cons_table)[i])
+      }
+    }
+    
+    if(uds_cnt[2] == 0){
+      if(uds_cnt[3] == -1){
+        mzm<-c(mzm,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 0){
+        mzz<-c(mzz,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 1){
+        mzp<-c(mzp,rownames(sub_cons_table)[i])
+      }
+    }
+    
+    if(uds_cnt[2] == 1){
+      if(uds_cnt[3] == -1){
+        mpm<-c(mpm,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 0){
+        mpz<-c(mpz,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 1){
+        mpp<-c(mpp,rownames(sub_cons_table)[i])
+      }
+    }
+  }
+  
+  if(uds_cnt[1] == 0){
+    if(uds_cnt[2] == -1){
+      if(uds_cnt[3] == -1){
+        zmm<-c(zmm,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 0){
+        zmz<-c(zmz,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 1){
+        zmp<-c(zmp,rownames(sub_cons_table)[i])
+      }
+    }
+    
+    if(uds_cnt[2] == 0){
+      if(uds_cnt[3] == -1){
+        zzm<-c(zzm,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 0){
+        zzz<-c(zzz,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 1){
+        zzp<-c(zzp,rownames(sub_cons_table)[i])
+      }
+    }
+    
+    if(uds_cnt[2] == 1){
+      if(uds_cnt[3] == -1){
+        zpm<-c(zpm,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 0){
+        zpz<-c(zpz,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 1){
+        zpp<-c(zpp,rownames(sub_cons_table)[i])
+      }
+    }
+  }
+  
+  if(uds_cnt[1] == 1){
+    if(uds_cnt[2] == -1){
+      if(uds_cnt[3] == -1){
+        pmm<-c(pmm,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 0){
+        pmz<-c(pmz,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 1){
+        pmm<-c(pmm,rownames(sub_cons_table)[i])
+      }
+    }
+    
+    if(uds_cnt[2] == 0){
+      if(uds_cnt[3] == -1){
+        pzm<-c(pzm,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 0){
+        pzz<-c(pzz,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 1){
+        pzm<-c(pzm,rownames(sub_cons_table)[i])
+      }
+    }
+    
+    if(uds_cnt[2] == 1){
+      if(uds_cnt[3] == -1){
+        ppm<-c(ppm,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 0){
+        ppz<-c(ppz,rownames(sub_cons_table)[i])
+      }
+      
+      if(uds_cnt[3] == 1){
+        ppp<-c(ppp,rownames(sub_cons_table)[i])
+      }
+    }
+  }
+  
+  
+  # 초기화
+  uds_cnt<-c(0,0,0)
+}
+
+ppm
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 시행사가 feature column으로 맞는지 판단하기 : ?
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## feature column 판단하기 위해 column 나누기
+
+-   은빈 - 14: 17 (총학원수 - 소음건수)
+
+-   현석 - 18 : 21 (광역버스 유무 - 총 cctv 수 )
+
+-   명철 - 22 :25 + 지역구분 ( 전체동수 - 세대타입)
+
+-   순형 - 26 : 30
+
+### 물어봐야 될 것들
+
+-   string 값의 컬럼을 feature column으로 쓸 때, factor로 바꿔서 one-hot encoding 할려고 해도 되는지와
+
+    -   이의 분포를 보고 추세가 비슷한 것 끼리 묶어서 번호를 매긴다음에 one-hot encoding 하는게 맞는지가 궁금하다.
+
+-   숫자 자체가 많지는 않아서 plot으로 봤을 때, 분위별 범위는 비슷한데, 분위별 분포로 봤을 때 (빈도수로 봤을 때)는 달라서 이거를 plot으로 판단할지, 분위별 범위로 판단해야 될지 모르겠다.
+
+-   feature column에 이상치 있으면 이걸 지워야 될지
+
+## 의미 있는 Feature column
+
+-   은빈 : 총학원수 , 지하철수 , 부동산수
+
+    -   
+
+-   현석 : 광역버스 유무, 광역버스 개수, 총공원수 , CCTV수
+
+    -   총공원수, CCTV수 합쳐서 써야 됨
+
+-   명철 : 전체동수, 분양형태 , 지역구분
+
+    -   전체동수는 몰려있어서 나눠야 됨(0\~10)
+
+    -   전체동수는 합쳐서 써야 됨
+
+-   순형 : 복도유형 , 난방방식
+
+    -   복도유형과 난방방식 합쳐서 써야 됨

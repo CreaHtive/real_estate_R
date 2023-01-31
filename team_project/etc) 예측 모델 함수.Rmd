@@ -1,0 +1,156 @@
+# 예측 모델 돌릴 함수 만들기
+
+## 인공신경망
+
+```{r}
+nnet_for<-function(test,n){
+  library(caret)
+  library(nnet)
+  library(e1071)
+  library(randomForest)
+  pred_vec<-c()
+  for (i in 1:n) {
+      samp <-createDataPartition(test$new, p = 0.7 , list = F)
+      estate.train<-test[samp,]
+      estate.test<-test[-samp,]
+      
+      x<-estate.test[,-ncol(test)]
+      y<-estate.test[,ncol(test)]
+      
+      model.nnet <- nnet(new  ~ . , data=estate.train , size = 10)
+      pred.nnet <- predict(model.nnet , x , type = "class")
+      pred_vec<-c(pred_vec,mean(pred.nnet == y) * 100)
+    }
+  return(pred_vec)
+}
+```
+
+```{r}
+nnet_for2<-function(test,n){
+  library(caret)
+  library(nnet)
+  library(e1071)
+  library(randomForest)
+  pred_vec<-c()
+  for (i in 1:n) {
+      samp <-createDataPartition(test$보증금범위, p = 0.7 , list = F)
+      estate.train<-test[samp,]
+      estate.test<-test[-samp,]
+      
+      x<-estate.test[,-1]
+      y<-estate.test[,1]
+      
+      model.nnet <- nnet(보증금범위  ~ . , data=estate.train , size = 3)
+      pred.nnet <- predict(model.nnet , x , type = "class")
+      pred_vec<-c(pred_vec,mean(pred.nnet == y) * 100)
+    }
+  return(pred_vec)
+}
+```
+
+## randomForest
+
+```{r}
+rf_for<-function(test,n){
+  library(caret)
+  library(nnet)
+  library(e1071)
+  library(randomForest)
+  pred_vec<-c()
+  for (i in 1:n) {
+      samp <-createDataPartition(test$new, p = 0.7 , list = F)
+      estate.train<-test[samp,]
+      estate.test<-test[-samp,]
+      
+     x<-estate.test[,-ncol(test)]
+      y<-estate.test[,ncol(test)]
+      
+      test.rf <- randomForest(new  ~ . ,estate.train , ntree = 100)
+      pred <- predict(test.rf , x)
+      pred_vec<-c(pred_vec,mean(pred == y) * 100)
+    }
+  return(pred_vec)
+}
+```
+
+```{r}
+rf_for2<-function(test,n){
+  library(caret)
+  library(nnet)
+  library(e1071)
+  library(randomForest)
+  pred_vec<-c()
+  for (i in 1:n) {
+      samp <-createDataPartition(test$보증금범위, p = 0.7 , list = F)
+      estate.train<-test[samp,]
+      estate.test<-test[-samp,]
+      
+      x<-estate.test[,-1]
+      y<-estate.test[,1]
+      
+      test.rf <- randomForest(보증금범위  ~ . ,estate.train , ntree = 100)
+      pred <- predict(test.rf , x)
+      pred_vec<-c(pred_vec,mean(pred == y) * 100)
+    }
+  return(pred_vec)
+}
+```
+
+## SVM
+
+```{r}
+svm_for<-function(test,n){
+  library(caret)
+  library(nnet)
+  library(e1071)
+  library(randomForest)
+  pred_vec<-c()
+  for (i in 1:n) {
+      samp <-createDataPartition(test$new, p = 0.7 , list = F)
+      estate.train<-test[samp,]
+      estate.test<-test[-samp,]
+      
+      x<-estate.test[,-ncol(test)]
+      y<-estate.test[,ncol(test)]
+      
+      model.svm <- svm(new  ~ . ,data = estate.train)
+      pred.svm <- predict(model.svm , x)
+      pred_vec<-c(pred_vec,mean(pred.svm == y) * 100)
+    }
+  return(pred_vec)
+}
+```
+
+```{r}
+svm_for2<-function(test,n){
+  library(caret)
+  library(nnet)
+  library(e1071)
+  library(randomForest)
+  pred_vec<-c()
+  for (i in 1:n) {
+      samp <-createDataPartition(test$보증금범위, p = 0.7 , list = F)
+      estate.train<-test[samp,]
+      estate.test<-test[-samp,]
+      
+      x<-estate.test[,-1]
+      y<-estate.test[,1]
+      
+      model.svm <- svm(보증금범위  ~ . ,data = estate.train)
+      pred.svm <- predict(model.svm , x)
+      pred_vec<-c(pred_vec,mean(pred.svm == y) * 100)
+    }
+  return(pred_vec)
+}
+```
+
+## String 을 numeric vector로
+
+```{r}
+string_to_numeric<-function(str){
+  str<-as.factor(str)
+  str<-as.numeric(str)
+  
+  return(str)
+}
+```

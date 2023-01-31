@@ -1,0 +1,16 @@
+# 동별 전세 가격 예측
+
+# 1. 파일 불러오기
+
+```{r}
+real_estate<-read.csv('data/real_estate_final_plus_academy_train_budongsan_noise_bus_park_cctv_apartment.csv')
+```
+
+# 2. 컬럼 지우기
+
+```{r}
+# 필요한 컬럼 : 4 ~ 10, 12 ~ 14 , 23 ~ 31
+real_estate<-real_estate[,c(4:10,12:14,23:31)]
+```
+
+## 3. 

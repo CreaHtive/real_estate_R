@@ -1,0 +1,287 @@
+# 동별 전세 가격 예측
+
+# 1. 파일 불러오기
+
+-   광진구 - 구의동 85% : 4개
+
+-   영등포구 - 도림동 96% 27 : 3개
+
+-   양천구 - 신월동 91% 31 : 7개
+
+-   양천구 - 신정동 90% 25 : 5개
+
+-   송파구 - 가락동 가장 좋은데 나누는게 애매하다 : 3개
+
+-   송파구 - 신천동 98% 10 : 3개
+
+-   송파구 - 오금동 96% 23 : 3개
+
+-   송파구 - 풍납동 91% 21 : 3개
+
+```{r}
+real_estate<-read.csv('data/real_estate_final_plus_academy_train_budongsan_noise_bus_park_cctv_apartment.csv')
+```
+
+# 2. 구별 , 동별 데이터 였던 컬럼 지우기
+
+```{r}
+sort(unique(real_estate$구))
+```
+
+```{r}
+real_estate<-subset(real_estate,real_estate$구 == '송파구')
+real_estate<-real_estate[,c(4:10,12:14,23:31)]
+unique(real_estate$아파트명)
+unique(real_estate$동)
+```
+
+```{r}
+real_estate<-subset(real_estate,real_estate$동 == '풍납동')
+```
+
+# 3. 아파트 별 보증금 히스토그램
+
+```{r}
+height<-ceiling(length(unique(real_estate$아파트명))/3)
+par(mfrow = c(height,3),
+    family = 'AppleGothic'
+    )
+
+for (i in sort(unique(real_estate$아파트명))) {
+  apart<-subset(real_estate,real_estate$아파트명 == i)
+  hist(apart$보증금,
+       xlab = i,
+       main = '보증금범위'
+       )
+  cat(paste(i,':',range(apart$보증금)),'\n')
+}
+```
+
+# 4. 아파트별 임대면적 별 보증금 히스토그램
+
+```{r}
+par(family = 'AppleGothic',
+    mfrow = c(4,5)
+    )
+
+for (i in sort(unique(real_estate$아파트명))) {
+  apart<-subset(real_estate,real_estate$아파트명 == i)
+  for (j in sort(unique(apart$임대면적))) {
+    area_apart<-subset(apart,apart$임대면적 == j)
+     hist(area_apart$보증금,
+       xlab = paste(i,':',round(j/3.3058),'평'),
+       main = '보증금범위'
+       )
+  cat(paste(i,':',range(area_apart$보증금)),'\n')
+  }
+}
+```
+
+# 5. 아파트별 임대면적 별 계약월별 보증금 히스토그램
+
+```{r}
+library(stringr)
+
+real_estate$계약월<-substr(real_estate$계약일, start = 5, stop = 6)
+```
+
+```{r}
+par(family = 'AppleGothic' )
+
+for (i in sort(unique(real_estate$아파트명))) {
+  apart<-subset(real_estate,real_estate$아파트명 == i)
+  for (j in sort(unique(apart$임대면적))) {
+    area_apart<-subset(apart,apart$임대면적 == j)
+    for (k in sort(unique(area_apart$계약월))) {
+      month_area_apart<-subset(area_apart,area_apart$계약월 == k)
+      hist(month_area_apart$보증금,
+       xlab = paste(i,':',round(j/3.3058),'평',':',k,'월'),
+       main = '보증금범위'
+      )
+      cat(paste(i,round(j/3.3058),'평',k,'월',':',range(month_area_apart$보증금)),'\n')
+    }
+  }
+}
+```
+
+# 6. 월 별 보다는 계절 별로 나눠보고 히스토그램 찍기
+
+```{r}
+real_estate$계약월<-as.numeric(real_estate$계약월)
+real_estate$계약계절<-ifelse(real_estate$계약월 == 12 | real_estate$계약월 <= 3,
+       '겨울',
+       ifelse(real_estate$계약월 <= 5,
+              '봄',
+              ifelse(real_estate$계약월 <= 9,
+                     '여름',
+                     '가을'
+                     )
+              )
+       )
+```
+
+```{r}
+par(family = 'AppleGothic')
+
+for (i in sort(unique(real_estate$아파트명))) {
+  apart<-subset(real_estate,real_estate$아파트명 == i)
+  for (j in sort(unique(apart$임대면적))) {
+    area_apart<-subset(apart,apart$임대면적 == j)
+    for (k in sort(unique(area_apart$계약계절))) {
+      month_area_apart<-subset(area_apart,area_apart$계약계절 == k)
+      hist(month_area_apart$보증금,
+       xlab = paste(i,':',round(j/3.3058),'평',':',k),
+       main = '보증금범위'
+      )
+      cat(paste(i,round(j/3.3058),'평',k,':',range(month_area_apart$보증금)),'\n')
+    }
+  }
+}
+```
+
+# 7. 6번에 층수까지 넣어보기
+
+```{r}
+par(family = 'AppleGothic')
+
+for (i in sort(unique(real_estate$아파트명))) {
+  apart<-subset(real_estate,real_estate$아파트명 == i)
+  for (j in sort(unique(apart$임대면적))) {
+    area_apart<-subset(apart,apart$임대면적 == j)
+    for (k in sort(unique(area_apart$계약계절))) {
+      month_area_apart<-subset(area_apart,area_apart$계약계절 == k)
+      for (l in sort(unique(month_area_apart$층))) {
+        floor_month_area_apart <- subset(area_apart,area_apart$층 == l)
+        hist(floor_month_area_apart$보증금,
+        xlab = paste(i,':',round(j/3.3058),'평',':',k,':',l,'층'),
+        main = '보증금범위'
+        )
+        cat(paste(i,round(j/3.3058),'평',k,l,'층',':',range(month_area_apart$보증금)),'\n')
+      }
+    }
+  }
+}
+```
+
+# modeling
+
+## 5-0. feature column 뽑아서 one-hot encoding 필요한 거 하기
+
+### 5-0-1. 필요한 column만 뽑기
+
+```{r}
+real_estate<-real_estate[,c(6,7,8,9,21)]
+real_estate
+```
+
+### 5-0-2. 아파트명 하고, 계약계절 one-hot encoding
+
+```{r}
+count <- 6
+
+# 아파트명 one hot encoding
+for (i in sort(unique(real_estate$아파트명))) {
+  real_estate<-cbind(real_estate,real_estate$아파트명 == i)
+  colnames(real_estate)[count]<-i
+  count = count + 1
+}
+
+# 계약계절 one hot encoding
+for (i in sort(unique(real_estate$계약계절))) {
+  real_estate<-cbind(real_estate,real_estate$계약계절 == i)
+  colnames(real_estate)[count]<-i
+  count = count + 1
+}
+real_estate
+```
+
+### 5-0-3. arrange column
+
+```{r}
+real_estate
+```
+
+```{r}
+real_estate<-real_estate[,c(2:4,6:ncol(real_estate))]
+```
+
+## 5-1. feature column 및 target column 정규화
+
+```{r}
+for (i in 1:3) {
+  min<-min(real_estate[,i])
+  max<-max(real_estate[,i])
+  real_estate<-cbind(real_estate,scale(real_estate[,i],center= min,scale = max - min))
+}
+# 맨 앞이 target 
+colnames(real_estate)[ncol(real_estate)-2]<-'target'
+# 나머지가 feature
+colnames(real_estate)[c(ncol(real_estate)-1,ncol(real_estate))]<-paste('v',seq(1,13,1),sep = '')
+```
+
+## 5-2. 정규화 된 feature column으로 군집화 하기
+
+```{r}
+test3<-real_estate[,4:ncol(real_estate)]
+training.data<-test3[,-(ncol(real_estate)-2)]
+```
+
+```{r}
+library(factoextra)
+library(ggplot2)
+
+fviz_nbclust(training.data, kmeans, method = 'wss',k.max = 10)
+```
+
+## 5-3. 군집화된 컬럼 넣기
+
+```{r}
+real_estate$new<-kmeans(training.data, 8 ,nstart=25)$cluster
+#real_estate$new<-ifelse(real_estate$new == 4,
+#       1,
+#       ifelse(real_estate$new == 26,
+#              8,
+#              real_estate$new
+#              )
+#       )
+
+real_estate$new<-factor(real_estate$new,
+       labels = c("1st",'2nd','3rd','4th','5th','6th','7th','8th'#,'9th','10th',
+                  #'11th','12th','13th','14th','15th','16th','17th','18th','19th','20th',
+                  #'21th'#,'22th','23th'#,'24th','25th','26th','27th','28th','29th','30th',
+                  #'31th','32th','33th','34th'#,'35th','36th','37th','38th','39th','40th'
+                  ),
+       levels = 1:8
+       )
+```
+
+## 5-4. 군집화된 컬럼의 범위 보기
+
+```{r}
+plot(real_estate$보증금~real_estate$new)
+
+a<-subset(real_estate$new,real_estate$new == '1st')
+
+boxplot(a$보증금)$stats
+
+#3사분위값 - median값 
+# a$보증금 > 4사분위값 + 3사분위값 - median값  
+```
+
+## 5-5. 예측률 확인 하기
+
+```{r}
+test<-real_estate[,c(2:(ncol(real_estate)-4),ncol(real_estate))]
+test2<-real_estate[,c(4:(ncol(real_estate)-4),(ncol(real_estate)-2):(ncol(real_estate)-1),ncol(real_estate))]
+```
+
+```{r}
+#mean(nnet_for(test,5))
+#mean(nnet_for(test2,5))
+
+#mean(rf_for(test,5)) 
+#mean(rf_for(test2,5))
+
+#mean(svm_for(test,5))
+#mean(svm_for(test2,5))
+```

@@ -1,0 +1,25 @@
+# 아파트 추가 정보 데이터
+
+## 1. 파일 가져오기
+
+```{r}
+apartment<-read.csv('data/서울시 공동주택 아파트 정보.csv',fileEncoding = 'euc-kr')
+real_estate<-read.csv('data/real_estate_final.csv')
+origin<-read.csv('data/서울시 부동산 전월세가 정보.csv',fileEncoding = 'euc-kr')
+```
+
+## 2. real_estate와 아파트 이름 비교해보기
+
+```{r}
+a<-real_estate$아파트명
+b<-apartment$k.아파트명
+```
+
+```{r}
+row_num<-which(a %in% b)
+length(row_num)
+c<-real_estate[row_num,]
+boxplot(c$보증금,
+        horizontal = T
+        )
+```

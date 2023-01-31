@@ -1,0 +1,163 @@
+# 1. 기초대사량 예측
+
+```{r}
+health<-read.csv('data/한국건강증진개발원_보건소 모바일 헬스케어_체성분_20220721.csv')
+```
+
+## 데이터 전부 다 보기
+
+```{r}
+head(health)
+tail(health)
+```
+
+## na 개수 파악하기
+
+```{r}
+for (i in 1:ncol(health)) {
+  cat(paste(i,'번째 열 : ',sum(is.na(health[i])),'\n'))
+}
+```
+
+## target data를 기초대사량으로 잡고 데이터 정제하기
+
+```{r}
+health_fix<-subset(health, !(is.na(health$기초대사율)))
+```
+
+```{r}
+health_finish<-subset(health_fix, health_fix$기초대사율 != 0)
+```
+
+```{r}
+health_finish<- health_finish[,-c(1,2,10)]
+```
+
+```{r}
+health_finish
+rownames(health_finish)<-c()
+```
+
+## 예측 몇 퍼센트정도 나오는지 봐보기
+
+```{r}
+lm(기초대사율~ . , data = health_finish)
+summary(lm(기초대사율~ . , data = health_finish))
+cor(health_finish)
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+# 2. 다이어트 예측
+
+```{r}
+diet <- read.csv('data/diet_data.csv')
+```
+
+```{r}
+head(diet)
+tail(diet)
+diet
+```
+
+## na 없애기
+
+```{r}
+diet <- diet[,-1]
+diet
+```
+
+```{r}
+diet<-diet[1:143,]
+```
+
+```{r}
+for (i in 1:ncol(diet)) {
+  cat(paste(i,'번째 열 : ',sum(is.na(diet[i])),'\n'))
+}
+```
+
+```{r}
+diet<-subset(diet, !is.na(diet$change))
+```
+
+```{r}
+for (i in 1:ncol(diet)) {
+  cat(paste(i,'번째 열 : ',sum(is.na(diet[i])),'\n'))
+}
+```
+
+```{r}
+sum(is.na(diet))
+```
+
+```{r}
+diet
+```
+
+```{r}
+summary(lm(change ~ Stone +Pounds+Ounces+walk , diet))
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+# 3. 날씨 예측
+
+```{r}
+weather<- read.csv('data/OBS_ASOS_DD_20221229143541.csv',fileEncoding = 'euc-kr')
+```
+
+```{r}
+weather
+```
+
+## 눈이나 비가 온 날 / 안 온 날
+
+일 강수량.mm. // 일.최심적설.cm.
+
+```{r}
+total <- nrow(weather)
+not_rain_num <- nrow(subset(weather ,is.na(weather$일강수량.mm.) | 
+         weather$일강수량.mm. == 0 ))
+
+(total - not_rain_num) / total * 100
+
+snow_sum <- total-nrow(subset(weather ,is.na(weather$일.최심적설.cm.) | 
+         weather$일.최심적설.cm. == 0 ))
+((total - not_rain_num) + snow_sum)/ total * 100
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+# 4. 부동산 예측(결정)
+
+```{r}
+real_estate_2022<-read.csv('data/서울시 부동산 전월세가 정보.csv',fileEncoding = 'euc-kr')
+```
+
+```{r}
+real_estate_2022<-subset(real_estate_2022,real_estate_2022$전월세.구분 == '전세')
+```
+
+```{r}
+real_estate_2022<-subset(real_estate_2022,real_estate_2022$건물용도 == '아파트')
+```
+
+```{r}
+# 3,5,10,11,13,14,17
+real_estate_2022<-real_estate_2022[,c(3,5,10,11,13,14,17)]
+```
+
+```{r}
+rownames(real_estate_2022) <- c()
+cor(real_estate_2022[,c(3,5,6,7)])
+```
+
+```{r}
+lm(real_estate_2022$보증금.만원. ~ real_estate_2022$층 + real_estate_2022$건축년도)
+summary(lm(real_estate_2022$보증금.만원. ~ real_estate_2022$층 + real_estate_2022$건축년도+ real_estate_2022$임대면적))
+```
+
+```{r}
+real_estate_2022
+```

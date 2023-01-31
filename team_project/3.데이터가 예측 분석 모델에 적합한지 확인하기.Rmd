@@ -1,0 +1,448 @@
+# 예측 분석 모델에 적합한지 확인하기
+
+## 파일 불러오기
+
+```{r}
+real_estate <- read.csv('data/real_estate_1.csv')
+```
+
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+## 1. boxplot으로 보증금 분포 확인하기
+
+```{r}
+boxplot(real_estate$보증금,
+        horizontal = T
+        )
+```
+
+## 2. boxplot 이상치 제거하기
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+real_estate <- arrange(real_estate,- real_estate$보증금)[-c(1:4),]
+rownames(real_estate) <- c()
+```
+
+## 3. 보증금과 나머지 컬럼과의 그래프 보기
+
+-   보증금 \~ 층
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$보증금 ~ real_estate$층,
+     xlab = '층수',
+     ylab = '보증금(단윈 : 만원)',
+     main = '보증금과 층수 산점도'
+     )
+```
+
+-   보증금 \~ 임대면적
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$보증금 ~ real_estate$임대면적,
+     xlab = '임대면적',
+     ylab = '보증금(단윈 : 만원)',
+     main = '보증금과 임대면적 산점도'
+     )
+```
+
+-   보증금 \~ 건축년도
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$보증금 ~ real_estate$건축년도,
+     xlab = '건축년도',
+     ylab = '보증금',
+     main = '보증금과 건축년도 산점도'
+     )
+```
+
+-   보증금 \~ 지번
+
+    -   보증금 판단 범위를 2와3의 max 값을 기준으로 하면 의미가 생길지도 모른다고 판단했다.
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$보증금~real_estate$지번,
+     xlab = '지번구분',
+     ylab = '보증금',
+     main = '보증금과 지번구분 산점도'
+     )
+```
+
+## 4. 지번 2,3의 보증금 max를 보고, 지번구분 feature column 타당성 입증
+
+-   14억을 기준으로 나누는 것은 의미가 없다고 판단하고 , 지번 컬럼은 없애도록 하겠다.
+
+```{r}
+max(subset(real_estate,real_estate$지번 == 3)$보증금)
+```
+
+```{r}
+real_estate<-real_estate[,-10]
+```
+
+## 5. 나머지 feature column 분포 보기
+
+-   층
+
+```{r}
+par(family = 'AppleGothic')
+hist(real_estate$층)
+```
+
+-   임대면적
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$임대면적)
+```
+
+```{r}
+par(family = 'AppleGothic')
+
+plot(real_estate$건축년도)
+```
+
+## 6. 상관계수 찍어보기
+
+-   feature column으로 어느정도 상관이 있다고 판다하여서 이를 기준으로 feature column을 붙여 나가면서 예측률을 높여 갈 생각이다.
+
+```{r}
+cor(real_estate[,7:10])
+```
+
+## 7. 보증금 카테고리 나눠보기 ( 6개로 )
+
+-   24380 : 3 / 24381 : 3
+
+### 1. 구간 별로 24380개의 데이터로 나눠보도록 하겠다.
+
+```{r}
+nrow(real_estate)
+max(real_estate$보증금)
+```
+
+### 2. 0부터 70억까지 10억 단위로 나누었을 때
+
+```{r}
+range<-seq(0,7*10^5,10^5)
+table(cut(real_estate$보증금,range,right = T))
+```
+
+### 3. 0부터 10억까지 1억 단위로 나누었을 때
+
+```{r}
+range<-seq(0,10^5,10^4)
+table(cut(real_estate$보증금,range,right = T))
+```
+
+### 4. 첫번째 구간 정하기
+
+-   1억 \~ 2억 : 15062
+
+-   2억 \~ 3억에서 첫번째 구간 발생 : +9318 인 곳에서
+
+```{r}
+range<-seq(2*10^4,3*10^4,10^3)
+table(cut(real_estate$보증금,range,right = T))
+```
+
+-   2억 \~ 2.6억 사이까지 9904 -\> 586개 덜어야 된다.
+
+```{r}
+range<-seq(2.5*10^4,2.6*10^4,10^2)
+table(cut(real_estate$보증금,range,right = T))
+```
+
+### 첫번째 구간 : 0 \~ 2.599억 -\> 24209
+
+### 
+
+### 5. 두번째 구간 정하기
+
+### 두번째 구간 : 2.599억 \~ 3.7억 -\> 24622
+
+### 6. 세번째 구간 정하기
+
+### 세번째 구간 : 3.7억 \~ 4.74억 -\> 24392
+
+### 7. 네번째 구간 정하기
+
+### 네번째 구간 : 4.74억 \~ 5.999억 -\> 23816
+
+### 8. 다섯번째 구간 정하기
+
+### 다섯번째 구간 : 5.999억 \~ 7.749억 -\> 24373
+
+### 9. 여섯번째 구간 정하기
+
+### 여섯번째 구간 : 7.749억 - 70억 -\> 24871
+
+```{r}
+range<-seq(7.749*10^4,7*10^5,62.251*10^4)
+table(cut(real_estate$보증금,range,right = T))
+```
+
+### 10. 구간별로 ifelse
+
+```{r}
+real_estate$new<-ifelse(real_estate$보증금<=2.599*10^4,
+       1,
+       ifelse(real_estate$보증금<=3.7*10^4,
+              2,
+              ifelse(real_estate$보증금<=4.74*10^4,
+                     3,
+                     ifelse(real_estate$보증금<=5.999*10^4,
+                            4,
+                            ifelse(real_estate$보증금<=7.749*10^4,
+                                   5,
+                                   6
+                                   )
+                            )
+                     )
+              )
+       )
+```
+
+### 11. 구간별 개수 한번더 체크
+
+```{r}
+table(real_estate$new)
+```
+
+### 12. new column 이름 바꾸기
+
+```{r}
+colnames(real_estate)[11]<-'보증금범위'
+```
+
+### 13. column 위치 바꾸기
+
+```{r}
+real_estate<-data.frame(real_estate[,1:7],
+           real_estate[11],
+           real_estate[,8:10]
+           )
+```
+
+### 14. 보증금 범위 factor로 바꾸기
+
+```{r}
+real_estate$보증금범위<-factor(real_estate$보증금범위,
+       levels = 1:6,
+       labels = c("1분위","2분위",'3분위','4분위','5분위','6분위')
+       )
+```
+
+### 15. 예측률 확인하기
+
+```{r}
+library(nnet)
+library(caret)
+library(randomForest)
+library(e1071)
+```
+
+```{r}
+real_estate
+test<-real_estate[,8:11]
+```
+
+```{r}
+#nnet_for(test,1)
+#rf_for(test,1) # 49.31
+#svm_for(test,1) # 41.29
+```
+
+## 8. 보증금 카테고리 나누기 (4개로)
+
+### 1. summary 이용해서 구간 나누기
+
+### 구간 : 31500 / 47250 / 67000
+
+```{r}
+real_estate
+# 1사분위 , 2사분위, 3사분위 로 나눠보기
+summary(real_estate$보증금)
+```
+
+```{r}
+real_estate$new<-ifelse(real_estate$보증금<=31500,
+       1,
+       ifelse(real_estate$보증금<=47250,
+              2,
+              ifelse(real_estate$보증금<=67000,
+                     3,
+                     4
+                     )
+              )
+       )
+```
+
+```{r}
+real_estate<-data.frame(real_estate[,1:7],
+           real_estate[12],
+           real_estate[,8:11]
+           )
+```
+
+```{r}
+colnames(real_estate)[8]<-'보증금범위2'
+```
+
+```{r}
+real_estate$보증금범위2<-factor(real_estate$보증금범위2,
+       levels = 1:4,
+       labels = c("1분위","2분위",'3분위','4분위')
+       )
+```
+
+### 2. 예측률 확인하기
+
+```{r}
+test<-real_estate[,c(8,9:12)]
+```
+
+```{r}
+#nnet_for(test,1)
+#mean(rf_for(test,5))
+#svm_for(test,1)
+```
+
+## 
+
+## 9. 보증금 카테고리 나누기 (8개로)
+
+### 1. 4개로 나눈 범위 반으로 나누기 위해 4개 씩의 평균 개수를 헤아려보자
+
+```{r}
+mean(table(real_estate$보증금범위2))
+```
+
+### 2. 0 - 3.15억 구간 반으로 나누기
+
+### 첫번째 구간 : 0 - 2.25억
+
+### 두번째 구간 : 2.25억 - 3.15억
+
+```{r}
+range<-seq(0,3.15*10^4,2.25*10^4)
+table(cut(real_estate$보증금,range,right = T))
+```
+
+### 3. 3.15억 - 4.725억 구간 반으로 나누기
+
+### 세번째 구간 : 3.15억 - 3.999억
+
+### 네번째 구간 : 3.999억 - 4.725억
+
+```{r}
+range<-seq(3.15*10^4,4.725*10^4,0.849*10^4)
+table(cut(real_estate$보증금,range,right = T))
+```
+
+### 4. 4.725억 - 6.7억 구간 반으로 나누기
+
+### 다섯번째 구간 : 4.725억 - 5.595억
+
+### 여섯번째 구간 : 5.595억 - 6.7억
+
+```{r}
+range<-seq(4.725*10^4,6.7*10^4,0.87*10^4)
+table(cut(real_estate$보증금,range,right = T))
+```
+
+### 5. 6.7억 - 70억 구간 반으로 나누기
+
+### 일곱번째 구간 : 6.7억 - 8.4억
+
+### 여덟번째 구간 : 8.4억 - 70억
+
+```{r}
+range<-seq(6.7*10^4,7*10^5,1.7*10^4)
+table(cut(real_estate$보증금,range,right = T))
+```
+
+### 6. 구간별 ifelse
+
+```{r}
+real_estate$new<-ifelse(real_estate$보증금<=2.25*10^4,
+       1,
+       ifelse(real_estate$보증금<=3.15*10^4,
+              2,
+              ifelse(real_estate$보증금<=3.999*10^4,
+                     3,
+                     ifelse(real_estate$보증금<=4.725*10^4,
+                            4,
+                            ifelse(real_estate$보증금<=5.595*10^4,
+                                   5,
+                                   ifelse(real_estate$보증금<=6.7*10^4,
+                                          6,
+                                          ifelse(real_estate$보증금<=8.4*10^4,
+                                                 7,
+                                                 8
+                                                 )
+                                          )
+                                   )
+                            )
+                     )
+              )
+       )
+```
+
+### 7. 구간별 개수 다시 체크
+
+```{r}
+table(real_estate$new)
+```
+
+### 8. new 컬럼 이름 바꾸기
+
+```{r}
+colnames(real_estate)[13]<-'보증금범위3'
+```
+
+### 9. column 위치 바꾸기
+
+```{r}
+real_estate<-data.frame(real_estate[,1:7],
+           real_estate[13],
+           real_estate[,8:12]
+           )
+```
+
+### 10. 보증금 범위 factor로 바꾸기
+
+```{r}
+real_estate$보증금범위3<-factor(real_estate$보증금범위3,
+       levels = 1:8,
+       labels = c("1분위","2분위",'3분위','4분위','5분위','6분위','7분위','8분위')
+       )
+```
+
+### 11. 예측률 확인하기
+
+```{r}
+test<-real_estate[,c(8,11:13)]
+```
+
+```{r}
+#mean(nnet_for(test,5)) # 13.09
+#mean(rf_for(test,5)) # 41.83
+#svm_for(test,1) # 34.26
+```
+
+```{r}
+write.csv(real_estate,'data/real_estate_final.csv',row.names = F)
+```

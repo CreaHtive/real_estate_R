@@ -1,0 +1,60 @@
+# 역세권인지 아닌지 구분하는 feature column 만들기
+
+## 1. 역세권 데이터 가져오기
+
+```{r}
+train_data<-read.csv('data/train_building_data.csv',fileEncoding = 'euc-kr')
+real_estate<-read.csv('data/real_estate_final.csv')
+```
+
+```{r}
+real_estate$보증금범위 <- as.factor(real_estate$보증금범위)
+real_estate$보증금범위2 <- as.factor(real_estate$보증금범위2)
+real_estate$보증금범위3 <- as.factor(real_estate$보증금범위3)
+```
+
+## 2. 필요한 컬럼만 빼기
+
+-   ADRES 에서 서울특별시만 뺀 데이터가 필요
+
+```{r}
+library(stringr)
+```
+
+```{r}
+# CLL , MNO ,ADRES
+unique(train_data$ADRES)
+```
+
+## 3. ADRES에서 서울특별시 빼기
+
+```{r}
+train_addr <- str_remove_all(train_data$ADRES,'서울특별시 ')
+```
+
+## 4. real_estate 구 동 본번 부번 합친 벡터 만들기
+
+```{r}
+estate_addr<-paste(real_estate$구,' ',real_estate$동,' ',real_estate$본번,'-',real_estate$부번,sep = '')
+```
+
+### 5. estate_addr , train_addr 비교해서 어느 row가 해당 되는지 확인하기
+
+```{r}
+true_row<-which(estate_addr %in% train_addr)
+```
+
+## 6. true_row로 새로운 컬럼 만들기
+
+```{r}
+real_estate$is_train_col <- rep(0,nrow(real_estate))
+real_estate$is_train_col[true_row]<-1
+```
+
+## 7. is_train_col 과 보증금 상관관계
+
+-   0.017로 상관이 없는 것 같아서 feature column으로 적당하지 않다고 판단
+
+```{r}
+cor(real_estate$보증금,real_estate$is_train_col)
+```

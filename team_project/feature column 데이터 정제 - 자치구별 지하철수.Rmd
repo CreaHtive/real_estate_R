@@ -1,0 +1,42 @@
+# 자치구별 지하철 수 데이터 정제하기
+
+## 1. 파일 가져오기
+
+```{r}
+train_num<-read.csv('data/서울교통공사_자치구별지하철역정보_20221130.csv',fileEncoding = 'euc-kr')
+real_estate<-read.csv('data/real_estate_final.csv')
+```
+
+## 2. 지하철역 개수 컬럼 빼서 real_estate 에 넣기
+
+```{r}
+library(stringr)
+```
+
+```{r}
+train_num_vec <- rep(0,nrow(real_estate))
+
+for (i in 1:nrow(real_estate)) {
+  for (j in 1:nrow(train_num)) {
+    if(real_estate$구[i] == train_num$자치구[j]){
+      train_num_vec[i]<-train_num$역수[j]
+    }
+  }
+}
+```
+
+```{r}
+real_estate$지하철수 <-train_num_vec
+```
+
+## 3. 지하철수와 보증금 상관관계
+
+```{r}
+cor(real_estate$보증금,real_estate$지하철수)
+```
+
+## 4. 파일 저장하기
+
+```{r}
+write.csv(real_estate,'data/real_estate_train.csv',row.names = F)
+```
